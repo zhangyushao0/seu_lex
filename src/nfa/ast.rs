@@ -1,6 +1,6 @@
 use display_tree::{AsTree, CharSet, DisplayTree, StyleBuilder};
 
-#[derive(DisplayTree)]
+#[derive(DisplayTree, Debug, Clone)]
 pub enum AstNode {
     And(#[tree] Box<AstNode>, #[tree] Box<AstNode>),
     Or(#[tree] Box<AstNode>, #[tree] Box<AstNode>),
@@ -103,10 +103,68 @@ impl Parser {
         }
         *stack.pop().unwrap()
     }
+    fn to_ast_directly(&mut self) -> AstNode {
+        let mut stack: Vec<Box<AstNode>> = Vec::new();
+        let mut op_stack: Vec<char> = Vec::new();
+        let precedence = |c: char| -> i32 {
+            match c {
+                '*' => 3,
+                '.' => 2,
+                '|' => 1,
+                _ => 0,
+            }
+        };
+
+        let stack_push = |op: char, stack: &mut Vec<Box<AstNode>>| match op {
+            '.' => {
+                let right = stack.pop().unwrap();
+                let left = stack.pop().unwrap();
+                stack.push(Box::new(AstNode::And(left, right)));
+            }
+            '|' => {
+                let right = stack.pop().unwrap();
+                let left = stack.pop().unwrap();
+                stack.push(Box::new(AstNode::Or(left, right)));
+            }
+            '*' => {
+                let node = stack.pop().unwrap();
+                stack.push(Box::new(AstNode::Star(node)));
+            }
+            _ => {}
+        };
+
+        for c in self.pattern.chars() {
+            match c {
+                '(' => op_stack.push(c),
+                ')' => {
+                    while let Some(op) = op_stack.pop() {
+                        if op == '(' {
+                            break;
+                        }
+                        stack_push(op, &mut stack);
+                    }
+                }
+                '*' | '.' | '|' => {
+                    while let Some(op) = op_stack.last() {
+                        if precedence(c) <= precedence(*op) {
+                            stack_push(op_stack.pop().unwrap(), &mut stack);
+                        } else {
+                            break;
+                        }
+                    }
+                    op_stack.push(c);
+                }
+                _ => stack.push(Box::new(AstNode::Char(c))),
+            }
+        }
+        while let Some(op) = op_stack.pop() {
+            stack_push(op, &mut stack);
+        }
+        *stack.pop().unwrap()
+    }
     pub fn parse(&mut self) -> AstNode {
         self.add_dot();
-        self.to_postfix();
-        self.to_ast()
+        self.to_ast_directly()
     }
 }
 
@@ -134,6 +192,19 @@ mod tests {
         let mut parser = Parser::new("(a|b)*abb".to_string());
         parser.add_dot();
         let ast = parser.to_ast();
+        println!(
+            "{}",
+            AsTree::new(&ast)
+                .indentation(1)
+                .char_set(CharSet::DOUBLE_LINE)
+        );
+    }
+
+    #[test]
+    fn test_to_ast_directly() {
+        let mut parser = Parser::new("(a|b)*abb".to_string());
+        parser.add_dot();
+        let ast = parser.to_ast_directly();
         println!(
             "{}",
             AsTree::new(&ast)
