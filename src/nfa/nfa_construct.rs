@@ -3,8 +3,8 @@ enum Transition {
     Epsilon,
     Symbol(char),
 }
+#[derive(Clone)]
 struct NfaState {
-    state_id: usize,
     transitions: Vec<(Transition, usize)>,
 }
 
@@ -25,17 +25,24 @@ impl Nfa {
             new_state: 1,
         }
     }
+    fn get_state(&mut self, state: usize) -> &mut NfaState {
+        if state >= self.states.len() {
+            self.states.resize(state + 1, NfaState { transitions: Vec::new() });
+        }
+        &mut self.states[state]
+    }
     fn construct() {}
     fn construct_node(&mut self, node: ast::AstNode) -> (usize, usize) {
         match node {
             ast::AstNode::And(left, right) => {
                 let (left_start, left_accept) = self.construct_node(*left);
                 let (right_start, right_accept) = self.construct_node(*right);
-                self.states[left_accept]
+                self.get_state(left_accept)
                     .transitions
                     .push((Transition::Epsilon, right_start));
                 (left_start, right_accept)
             }
+            ast::AstNode::O
         }
     }
 }
