@@ -26,15 +26,15 @@ impl Nfa {
         }
     }
     fn construct() {}
-    fn construct_node(&mut self, node: ast::AstNode) -> usize {
+    fn construct_node(&mut self, node: ast::AstNode) -> (usize, usize) {
         match node {
             ast::AstNode::And(left, right) => {
-                let left_state = self.construct_node(*left);
-                let right_state = self.construct_node(*right);
-                self.states[left_state]
+                let (left_start, left_accept) = self.construct_node(*left);
+                let (right_start, right_accept) = self.construct_node(*right);
+                self.states[left_accept]
                     .transitions
-                    .push((Transition::Epsilon, right_state));
-                left_state
+                    .push((Transition::Epsilon, right_start));
+                (left_start, right_accept)
             }
         }
     }
