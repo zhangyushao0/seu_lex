@@ -1,4 +1,7 @@
-use super::ast;
+use crate::ast;
+use petgraph::dot::{Config, Dot};
+use petgraph::graph::DiGraph;
+use std::collections::HashMap;
 #[derive(Clone, Debug)]
 enum Transition {
     Epsilon,
@@ -13,20 +16,24 @@ struct NfaState {
 struct Nfa {
     states: Vec<NfaState>,
     start: usize,
-    accept: usize,
+    accept: Vec<(usize, Tag)>,
     new_state: usize,
-    ast: ast::AstNode,
+    asts: Vec<(ast::AstNode, Tag)>,
 }
-
+#[derive(Debug, Clone)]
+struct Tag(String);
 impl Nfa {
-    fn new(pattern: String) -> Nfa {
-        let ast = ast::Parser::new(pattern).parse();
+    fn new(pattern: Vec<(String, Tag)>) -> Nfa {
+        let mut asts = Vec::new();
+        for (s, t) in pattern {
+            asts.push((ast::Parser::new(s).parse(), t));
+        }
         Nfa {
             states: Vec::new(),
             start: 0,
-            accept: 0,
-            new_state: 1,
-            ast,
+            accept: Vec::new(),
+            new_state: 0,
+            asts,
         }
     }
     fn get_state(&mut self, state: usize) -> &mut NfaState {
@@ -40,10 +47,29 @@ impl Nfa {
         }
         &mut self.states[state]
     }
+    fn construct_one(&mut self, ast: ast::AstNode, tag: Tag) -> usize {
+        let (start, accept) = self.construct_node(ast);
+        self.accept.push((accept, tag));
+
+        start
+    }
     fn construct(&mut self) {
-        let (start, accept) = self.construct_node(self.ast.clone());
-        self.start = start;
-        self.accept = accept;
+        self.get_state(self.start);
+        self.new_state += 1;
+        for (ast, tag) in &self.asts.clone() {
+            let start = self.construct_one(ast.clone(), tag.clone());
+            self.get_state(self.start)
+                .transitions
+                .push((Transition::Epsilon, start));
+        }
+        if self.states.len() <= self.new_state {
+            self.states.resize(
+                self.new_state,
+                NfaState {
+                    transitions: Vec::new(),
+                },
+            );
+        }
     }
     fn construct_node(&mut self, node: ast::AstNode) -> (usize, usize) {
         match node {
@@ -108,23 +134,52 @@ impl Nfa {
             }
         }
     }
+
+    fn to_graphviz(&self) -> String {
+        let mut graph = DiGraph::<String, String>::new();
+        let mut state_map = HashMap::new();
+        for (i, state) in self.states.iter().enumerate() {
+            let mut label = format!("State {}", i);
+            if i == self.start {
+                label += " (start)";
+            }
+            for (accept, tag) in &self.accept {
+                if i == *accept {
+                    label += &format!(" (accept: {})", tag.0);
+                }
+            }
+            let node_index = graph.add_node(label);
+            state_map.insert(i, node_index);
+        }
+        println!("{:?}", state_map);
+        for (i, state) in self.states.iter().enumerate() {
+            for (transition, next) in &state.transitions {
+                let edge_label = match transition {
+                    Transition::Epsilon => "ε".to_string(),
+                    Transition::Symbol(c) => c.to_string(),
+                };
+                graph.add_edge(state_map[&i], state_map[next], edge_label);
+            }
+        }
+
+        let mut dot = Dot::new(&graph);
+        // dot.set_graph_id("nfa");
+        format!("{:?}", dot)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     #[test]
-    fn test_nfa_construct() {
-        let mut nfa = Nfa::new("(a|b)*abb".to_string());
+    fn test_nfa_graphviz() {
+        let pattern = vec![
+            ("(a_b|a*b)*".to_string(), Tag("a".to_string())),
+            ("(a|b)*abb".to_string(), Tag("b".to_string())),
+        ];
+        let mut nfa = Nfa::new(pattern);
         nfa.construct();
-        for (i, state) in nfa.states.iter().enumerate() {
-            println!("state {}", i);
-            for (transition, next) in &state.transitions {
-                match transition {
-                    Transition::Epsilon => println!("  -> {}", next),
-                    Transition::Symbol(c) => println!("  -{}-> {}", c, next),
-                }
-            }
-        }
+        let dot = nfa.to_graphviz();
+        println!("{}", dot);
     }
 }
