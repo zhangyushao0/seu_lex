@@ -1,29 +1,29 @@
 use crate::ast;
+use crate::common::Tag;
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::DiGraph;
 use std::collections::HashMap;
 #[derive(Clone, Debug)]
-enum Transition {
+pub enum Transition {
     Epsilon,
     Symbol(char),
 }
 #[derive(Clone, Debug)]
-struct NfaState {
-    transitions: Vec<(Transition, usize)>,
+pub struct NfaState {
+    pub transitions: Vec<(Transition, usize)>,
 }
 
 #[derive(Debug)]
-struct Nfa {
-    states: Vec<NfaState>,
-    start: usize,
-    accept: Vec<(usize, Tag)>,
+pub struct Nfa {
+    pub states: Vec<NfaState>,
+    pub start: usize,
+    pub accept: Vec<(usize, Tag)>,
     new_state: usize,
     asts: Vec<(ast::AstNode, Tag)>,
 }
-#[derive(Debug, Clone)]
-struct Tag(String);
+
 impl Nfa {
-    fn new(pattern: Vec<(String, Tag)>) -> Nfa {
+    pub fn new(pattern: Vec<(String, Tag)>) -> Nfa {
         let mut asts = Vec::new();
         for (s, t) in pattern {
             asts.push((ast::Parser::new(s).parse(), t));
@@ -53,7 +53,7 @@ impl Nfa {
 
         start
     }
-    fn construct(&mut self) {
+    pub fn construct(&mut self) {
         self.get_state(self.start);
         self.new_state += 1;
         for (ast, tag) in &self.asts.clone() {
