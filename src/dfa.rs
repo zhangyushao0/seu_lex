@@ -9,25 +9,34 @@ enum Transition {
     Char(char),
 }
 #[derive(Debug)]
-struct DfaState {
+pub struct DfaState {
     transitions: Vec<(Transition, usize)>,
     nfa_states: Vec<usize>,
-    accept: Option<Tag>,
+    pub accept: Option<Tag>,
 }
 #[derive(Debug)]
-struct Dfa {
-    states: Vec<DfaState>,
+pub struct Dfa {
+    pub states: Vec<DfaState>,
     nfa: Nfa,
 }
 
 impl Dfa {
-    fn new(pattern: Vec<(String, Tag)>) -> Dfa {
+    pub fn new(pattern: Vec<(String, Tag)>) -> Dfa {
         let mut nfa = Nfa::new(pattern);
         nfa.construct();
         Dfa {
             states: Vec::new(),
             nfa,
         }
+    }
+    pub fn get_next_state(&self, state: usize, c: char) -> Option<usize> {
+        for (transition, next) in &self.states[state].transitions {
+            let Transition::Char(ch) = transition;
+            if *ch == c {
+                return Some(*next);
+            }
+        }
+        None
     }
 
     fn get_epsilon_closure(&self, state: usize) -> Vec<usize> {
@@ -77,7 +86,7 @@ impl Dfa {
             Some(accepts[0].clone())
         }
     }
-    fn construct(&mut self) {
+    pub fn construct(&mut self) {
         let mut stack = Vec::new();
         let mut start = self.get_epsilon_closure(self.nfa.start);
         self.states.push(DfaState {
@@ -129,18 +138,21 @@ impl Dfa {
         }
     }
 
-    fn minimize(&mut self) {
+    pub fn minimize(&mut self) {
         let mut partition = Vec::new();
-        let mut accept = Vec::new();
+        let mut accepts = HashMap::new();
         let mut reject = Vec::new();
         for (i, state) in self.states.iter().enumerate() {
-            if state.accept.is_some() {
-                accept.push(i);
+            if let Some(accept_tag) = &state.accept {
+                let entry = accepts.entry(accept_tag).or_insert(Vec::new());
+                entry.push(i);
             } else {
                 reject.push(i);
             }
         }
-        partition.push(accept);
+        for (_, accept) in accepts {
+            partition.push(accept);
+        }
         partition.push(reject);
         loop {
             let mut new_partition = Vec::new();
@@ -200,14 +212,13 @@ impl Dfa {
         }
 
         partition.sort_by(|a, b| a[0].cmp(&b[0]));
-        println!("{:?}", partition);
+
         let mut new_states = Vec::new();
 
         for part in &partition {
             let mut group_map: HashMap<Vec<(Transition, usize)>, Vec<usize>> = HashMap::new();
             for &state_index in part {
                 let transitions = self.states[state_index].transitions.clone();
-                println!("{:?}", transitions);
                 let group_transitions = transitions
                     .iter()
                     .map(|(t, next)| {
@@ -344,8 +355,11 @@ mod tests {
     #[test]
     fn test_dfa_graphviz() {
         let pattern = vec![
-            ("(a|b)*abb(a|b)*".to_string(), Tag("a".to_string())),
-            ("(c*|d*)*".to_string(), Tag("b".to_string())),
+            (
+                "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*".to_string(),
+                Tag("DIGIT".to_string()),
+            ),
+            ("a".to_string(), Tag("SPACE".to_string())),
         ];
         let mut dfa = Dfa::new(pattern);
         dfa.construct();
@@ -356,8 +370,11 @@ mod tests {
     #[test]
     fn test_minimize() {
         let pattern = vec![
-            ("(a|b)*abb(a|b)*".to_string(), Tag("a".to_string())),
-            ("(c*|d*)*".to_string(), Tag("b".to_string())),
+            (
+                "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*".to_string(),
+                Tag("DIGIT".to_string()),
+            ),
+            (" ".to_string(), Tag("SPACE".to_string())),
         ];
         let mut dfa = Dfa::new(pattern);
         dfa.construct();
