@@ -1,6 +1,6 @@
 use crate::common::Tag;
 use crate::dfa::Dfa;
-struct lexer<I>
+pub struct Lexer<I>
 where
     I: Iterator<Item = char>,
 {
@@ -9,22 +9,22 @@ where
     last_char: Option<char>,
 }
 
-impl<I> lexer<I>
+impl<I> Lexer<I>
 where
     I: Iterator<Item = char>,
 {
-    fn new(input: I, pattern: Vec<(String, Tag)>) -> Self {
+    pub fn new(input: I, pattern: Vec<(String, Tag)>) -> Self {
         let mut dfa = Dfa::new(pattern);
         dfa.construct();
         dfa.minimize();
-        lexer {
+        Lexer {
             input,
             dfa,
             last_char: None,
         }
     }
 
-    fn get_next_token(&mut self) -> Option<(String, Tag)> {
+    pub fn get_next_token(&mut self) -> Option<(String, Tag)> {
         let mut state = 0;
         let mut token = String::new();
         if let Some(c) = self.last_char {
@@ -55,8 +55,25 @@ where
             None
         }
     }
-}
 
+    // DIGIT->(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*
+
+    // WHITESPACE->( |\t|\n)*
+}
+pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
+    let mut pattern = Vec::new();
+    let content = std::fs::read_to_string(path).unwrap();
+    let mut lines = content.lines();
+    while let Some(line) = lines.next() {
+        let mut iter = line.split("->");
+        let tag_str = iter.next().unwrap();
+        let pattern_str = iter.next().unwrap();
+        let pattern_str = pattern_str.replace("\\t", "\t");
+        let pattern_str = pattern_str.replace("\\n", "\n");
+        pattern.push((pattern_str.to_string(), Tag(tag_str.to_string())));
+    }
+    pattern
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -70,7 +87,25 @@ mod tests {
             (" ".to_string(), Tag("SPACE".to_string())),
         ];
         let input = "123 45".chars();
-        let mut l = lexer::new(input, pattern);
+        let mut l = Lexer::new(input, pattern);
+        let mut tokens = Vec::new();
+        while let Some(token) = l.get_next_token() {
+            tokens.push(token);
+        }
+        println!("{:?}", tokens);
+    }
+
+    #[test]
+    fn test_read_from_lex_file() {
+        let pattern = read_from_lex_file("/home/zys/repo/seu_lex/demo.lex");
+        println!("{:?}", pattern);
+    }
+
+    #[test]
+    fn test_lexer_from_file() {
+        let pattern = read_from_lex_file("/home/zys/repo/seu_lex/demo.lex");
+        let input = "123 45 aufu0".chars();
+        let mut l = Lexer::new(input, pattern);
         let mut tokens = Vec::new();
         while let Some(token) = l.get_next_token() {
             tokens.push(token);
