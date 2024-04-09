@@ -1,0 +1,41 @@
+name: Rust Build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: Build and Move Artifacts
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0 # 获取全部历史以便构建
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Build
+      run: cargo build --release
+
+    - name: Move Artifacts
+      run: |
+        mkdir -p lib
+        mv target/release/libseu_lex.lib lib/
+        # 替换 <your-binary-name> 为你的二进制文件名
+
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: binary-artifacts
+        path: lib/
