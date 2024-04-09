@@ -80,8 +80,8 @@ impl Dfa {
         }
         if accepts.is_empty() {
             None
-        } else if accepts.len() != 1 {
-            panic!("Ambiguous accept state")
+        // } else if accepts.len() != 1 {
+        //     panic!("Ambiguous accept state")
         } else {
             Some(accepts[0].clone())
         }

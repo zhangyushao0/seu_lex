@@ -4,9 +4,10 @@ pub struct Lexer<I>
 where
     I: Iterator<Item = char>,
 {
-    input: I,
+    pub input: I,
     dfa: Dfa,
     last_char: Option<char>,
+    pub pos: usize,
 }
 
 impl<I> Lexer<I>
@@ -21,22 +22,30 @@ where
             input,
             dfa,
             last_char: None,
+            pos: 0,
         }
     }
-
+    fn get_next_char(&mut self) -> Option<char> {
+        if let Some(c) = self.last_char {
+            self.last_char = None;
+            return Some(c);
+        }
+        self.pos += 1;
+        self.input.next()
+    }
     pub fn get_next_token(&mut self) -> Option<(String, Tag)> {
         let mut state = 0;
         let mut token = String::new();
-        if let Some(c) = self.last_char {
-            if let Some(next_state) = self.dfa.get_next_state(state, c) {
-                token.push(c);
-                state = next_state;
-            } else {
-                return None;
-            }
-        }
+        // if let Some(c) = self.last_char {
+        //     if let Some(next_state) = self.dfa.get_next_state(state, c) {
+        //         token.push(c);
+        //         state = next_state;
+        //     } else {
+        //         return None;
+        //     }
+        // }
         loop {
-            if let Some(c) = self.input.next() {
+            if let Some(c) = self.get_next_char() {
                 if let Some(next_state) = self.dfa.get_next_state(state, c) {
                     token.push(c);
                     state = next_state;
@@ -55,10 +64,9 @@ where
             None
         }
     }
-
-    // DIGIT->(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*
-
-    // WHITESPACE->( |\t|\n)*
+    pub fn is_done(&self) -> bool {
+        self.last_char.is_none()
+    }
 }
 pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
     let mut pattern = Vec::new();
@@ -104,12 +112,13 @@ mod tests {
     #[test]
     fn test_lexer_from_file() {
         let pattern = read_from_lex_file("/home/zys/repo/seu_lex/demo.lex");
-        let input = "123 45 aufu0".chars();
+        let input = "123 45 aufu0  ".chars();
         let mut l = Lexer::new(input, pattern);
         let mut tokens = Vec::new();
         while let Some(token) = l.get_next_token() {
             tokens.push(token);
         }
         println!("{:?}", tokens);
+        assert!(l.is_done());
     }
 }
