@@ -31,7 +31,7 @@ jobs:
     - name: Move Artifacts
       run: |
         mkdir -p lib
-        mv target/release/libseu_lex.lib lib/
+        mv target/release/libseu_lex.a lib/
         # 替换 <your-binary-name> 为你的二进制文件名
 
     - name: Upload Artifacts
