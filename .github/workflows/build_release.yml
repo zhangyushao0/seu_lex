@@ -58,7 +58,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            artifacts/libseu_lex.a
-            artifacts/seu_lex.lib
+            seu_lex/artifacts/libseu_lex.a
+            seu_lex/artifacts/seu_lex.lib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
