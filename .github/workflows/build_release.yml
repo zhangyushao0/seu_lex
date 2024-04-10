@@ -2,8 +2,6 @@ name: Build and Release
 
 on:
   push:
-    branches:
-      - master  # 或者你用于发布的任何分支
     tags:
       - 'v*.*.*'  # 假设您的标签遵循语义版本控制
 
