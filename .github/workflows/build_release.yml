@@ -1,5 +1,8 @@
 name: Build and Release
 
+permissions:
+  contents: write
+  
 on:
   push:
     tags:
@@ -56,7 +59,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            seu_lex/artifacts/libseu_lex.a
-            seu_lex/artifacts/seu_lex.lib
+    artifacts/libseu_lex.a/libseu_lex.a
+    artifacts/seu_lex.lib/seu_lex.lib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
