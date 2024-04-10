@@ -36,14 +36,6 @@ where
     pub fn get_next_token(&mut self) -> Option<(String, Tag)> {
         let mut state = 0;
         let mut token = String::new();
-        // if let Some(c) = self.last_char {
-        //     if let Some(next_state) = self.dfa.get_next_state(state, c) {
-        //         token.push(c);
-        //         state = next_state;
-        //     } else {
-        //         return None;
-        //     }
-        // }
         loop {
             if let Some(c) = self.get_next_char() {
                 if let Some(next_state) = self.dfa.get_next_state(state, c) {
@@ -78,6 +70,7 @@ pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
         let pattern_str = iter.next().unwrap();
         let pattern_str = pattern_str.replace("\\t", "\t");
         let pattern_str = pattern_str.replace("\\n", "\n");
+        let pattern_str = pattern_str.replace("\\r", "\r");
         pattern.push((pattern_str.to_string(), Tag(tag_str.to_string())));
     }
     pattern

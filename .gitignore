@@ -1,2 +1,6 @@
 /target
 a.out
+
+*.lib
+*.a
+*.exe
