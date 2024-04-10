@@ -17,7 +17,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             asset_name: libseu_lex.a
           - os: windows-latest
-            target: x86_64-pc-windows-gnu
+            target: x86_64-pc-windows-msvc
             asset_name: seu_lex.lib
     steps:
       - uses: actions/checkout@v3
