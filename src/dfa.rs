@@ -382,4 +382,16 @@ mod tests {
         let dot = dfa.to_graphviz();
         println!("{}", dot);
     }
+    #[test]
+    fn test_minimize2() {
+        let pattern = vec![
+            ("abcd".to_string(), Tag("SHORT".to_string())),
+            ("abcdefg".to_string(), Tag("LONG".to_string())),
+        ];
+        let mut dfa = Dfa::new(pattern);
+        dfa.construct();
+        dfa.minimize();
+        let dot = dfa.to_graphviz();
+        println!("{}", dot);
+    }
 }

@@ -36,7 +36,7 @@ pub extern "C" fn lexer_init(lex_path: *const c_char, src_path: *const c_char) {
         let mut pos = 0;
         let mut line_no = 0;
         let mut col_no = 0;
-        let error_token = src_content.chars().nth(error_pos - 1).unwrap();
+        let error_token = src_content.chars().nth(error_pos - 1).unwrap_or(' ');
         let error_message = format!("unexpected token for '{}'", error_token);
         for (i, line) in lines.iter().enumerate() {
             if pos + line.len() + 1 > error_pos {

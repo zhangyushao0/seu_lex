@@ -8,6 +8,7 @@ where
     dfa: Dfa,
     last_char: Option<char>,
     pub pos: usize,
+    is_done: bool,
 }
 
 impl<I> Lexer<I>
@@ -23,6 +24,7 @@ where
             dfa,
             last_char: None,
             pos: 0,
+            is_done: false,
         }
     }
     fn get_next_char(&mut self) -> Option<char> {
@@ -36,10 +38,14 @@ where
     pub fn get_next_token(&mut self) -> Option<(String, Tag)> {
         let mut state = 0;
         let mut token = String::new();
+        let mut last_accept = None;
         loop {
             if let Some(c) = self.get_next_char() {
                 if let Some(next_state) = self.dfa.get_next_state(state, c) {
                     token.push(c);
+                    if let Some(accept_tag) = self.dfa.states[next_state].accept.clone() {
+                        last_accept = Some((token.clone(), accept_tag));
+                    }
                     state = next_state;
                 } else {
                     self.last_char = Some(c);
@@ -47,17 +53,16 @@ where
                 }
             } else {
                 self.last_char = None;
+                if last_accept.is_some() {
+                    self.is_done = true;
+                }
                 break;
             }
         }
-        if let Some(accept_tag) = self.dfa.states[state].accept.clone() {
-            Some((token, accept_tag))
-        } else {
-            None
-        }
+        last_accept
     }
     pub fn is_done(&self) -> bool {
-        self.last_char.is_none()
+        self.is_done
     }
 }
 pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
@@ -104,8 +109,8 @@ mod tests {
 
     #[test]
     fn test_lexer_from_file() {
-        let pattern = read_from_lex_file("/home/zys/repo/seu_lex/demo.lex");
-        let input = "123 45 aufu0  ".chars();
+        let pattern = read_from_lex_file("G:\\repo\\seu_lex\\demo.lex");
+        let input = "abc".chars();
         let mut l = Lexer::new(input, pattern);
         let mut tokens = Vec::new();
         while let Some(token) = l.get_next_token() {
