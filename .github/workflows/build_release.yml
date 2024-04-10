@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master  # 或者你用于发布的任何分支
+    tags:
+      - 'v*.*.*'  # 假设您的标签遵循语义版本控制
 
 jobs:
   build:
@@ -28,20 +30,16 @@ jobs:
           default: true
           profile: minimal
           override: true
-
       - name: Add target
         run: rustup target add ${{ matrix.target }}
-
       - name: Build staticlib
         run: cargo build --release --target ${{ matrix.target }}
         env:
           CARGO_TERM_COLOR: always
-
       - name: Rename & Move the artifact
         run: |
           mkdir -p artifacts
           cp target/${{ matrix.target }}/release/${{ matrix.asset_name }} artifacts/
-      
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.asset_name }}
@@ -50,40 +48,17 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           path: artifacts/
-
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Create and Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/libseu_lex.a
+            artifacts/seu_lex.lib
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          draft: false
-          prerelease: false
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/libseu_lex.a
-          asset_name: libseu_lex.a
-          asset_content_type: application/octet-stream
-
-      - name: Upload Release Asset Windows
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/seu_lex.lib
-          asset_name: seu_lex.lib
-          asset_content_type: application/octet-stream
