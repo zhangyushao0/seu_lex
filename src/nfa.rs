@@ -122,6 +122,40 @@ impl Nfa {
                     .push((Transition::Epsilon, accept));
                 (start, accept)
             }
+            ast::AstNode::Plus(node) => {
+                let start = self.new_state;
+                self.new_state += 1;
+                let accept = self.new_state;
+                self.new_state += 1;
+                let (node_start, node_accept) = self.construct_node(*node);
+                self.get_state(start)
+                    .transitions
+                    .push((Transition::Epsilon, node_start));
+                self.get_state(node_accept)
+                    .transitions
+                    .push((Transition::Epsilon, node_start));
+                self.get_state(node_accept)
+                    .transitions
+                    .push((Transition::Epsilon, accept));
+                (start, accept)
+            }
+            ast::AstNode::Question(node) => {
+                let start = self.new_state;
+                self.new_state += 1;
+                let accept = self.new_state;
+                self.new_state += 1;
+                let (node_start, node_accept) = self.construct_node(*node);
+                self.get_state(start)
+                    .transitions
+                    .push((Transition::Epsilon, node_start));
+                self.get_state(start)
+                    .transitions
+                    .push((Transition::Epsilon, accept));
+                self.get_state(node_accept)
+                    .transitions
+                    .push((Transition::Epsilon, accept));
+                (start, accept)
+            }
             ast::AstNode::Char(c) => {
                 let start = self.new_state;
                 self.new_state += 1;
@@ -130,6 +164,18 @@ impl Nfa {
                 self.get_state(start)
                     .transitions
                     .push((Transition::Symbol(c), accept));
+                (start, accept)
+            }
+            ast::AstNode::Span(start_char, end_char) => {
+                let start = self.new_state;
+                self.new_state += 1;
+                let accept = self.new_state;
+                self.new_state += 1;
+                for c in start_char..=end_char {
+                    self.get_state(start)
+                        .transitions
+                        .push((Transition::Symbol(c as char), accept));
+                }
                 (start, accept)
             }
         }
@@ -174,7 +220,7 @@ mod tests {
     #[test]
     fn test_nfa_graphviz() {
         let pattern = vec![
-            ("(a_b|a*b)*".to_string(), Tag("a".to_string())),
+            ("(a|b)+[a-c]".to_string(), Tag("a".to_string())),
             ("(a|b)*abb".to_string(), Tag("b".to_string())),
         ];
         let mut nfa = Nfa::new(pattern);

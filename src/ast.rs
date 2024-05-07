@@ -5,11 +5,24 @@ pub enum AstNode {
     And(#[tree] Box<AstNode>, #[tree] Box<AstNode>),
     Or(#[tree] Box<AstNode>, #[tree] Box<AstNode>),
     Star(#[tree] Box<AstNode>),
+    Plus(#[tree] Box<AstNode>),
+    Question(#[tree] Box<AstNode>),
     Char(char),
+    Span(char, char),
 }
 
 pub struct Parser {
     pattern: String,
+}
+
+#[derive(Eq, PartialEq, Debug)]
+enum CharType {
+    End,
+    Begin,
+    Middle,
+    SpanMiddle,
+    BackSlash,
+    Normal,
 }
 
 impl Parser {
@@ -17,23 +30,36 @@ impl Parser {
         Parser { pattern }
     }
     fn add_dot(&mut self) {
+        let check_char = |c: char| -> CharType {
+            match c {
+                '(' | '[' => CharType::Begin,
+                ')' | ']' => CharType::End,
+                '*' | '+' | '?' => CharType::End,
+                '|' => CharType::Middle,
+                '-' => CharType::SpanMiddle,
+                _ => CharType::Normal,
+            }
+        };
+
         let mut new_pattern = String::new();
-        let mut last_char = '\0';
-        for c in self.pattern.chars() {
-            if last_char == '\0' {
-            } else if last_char != '('
-                && last_char != '|'
-                && c != '*'
-                && c != ')'
-                && c != '|'
-                && c != '('
+        let mut chars = self.pattern.chars();
+        let mut prev = chars.next().unwrap();
+        new_pattern.push(prev);
+        for c in chars {
+            let prev_type = check_char(prev);
+            let cur_type = check_char(c);
+            if prev_type == CharType::SpanMiddle || cur_type == CharType::SpanMiddle {
+            } else if prev_type == CharType::Normal
+                && (cur_type == CharType::Normal || cur_type == CharType::Begin)
             {
                 new_pattern.push('.');
-            } else if c == '(' && last_char != '|' && last_char != '(' {
+            } else if prev_type == CharType::End
+                && (cur_type == CharType::Begin || cur_type == CharType::Normal)
+            {
                 new_pattern.push('.');
             }
             new_pattern.push(c);
-            last_char = c;
+            prev = c;
         }
         self.pattern = new_pattern;
     }
@@ -106,9 +132,12 @@ impl Parser {
     fn to_ast_directly(&mut self) -> AstNode {
         let mut stack: Vec<Box<AstNode>> = Vec::new();
         let mut op_stack: Vec<char> = Vec::new();
+        let mut span_stack: Vec<char> = Vec::new();
         let precedence = |c: char| -> i32 {
             match c {
                 '*' => 3,
+                '+' => 3,
+                '?' => 3,
                 '.' => 2,
                 '|' => 1,
                 _ => 0,
@@ -130,6 +159,14 @@ impl Parser {
                 let node = stack.pop().unwrap();
                 stack.push(Box::new(AstNode::Star(node)));
             }
+            '+' => {
+                let node = stack.pop().unwrap();
+                stack.push(Box::new(AstNode::Plus(node)));
+            }
+            '?' => {
+                let node = stack.pop().unwrap();
+                stack.push(Box::new(AstNode::Question(node)));
+            }
             _ => {}
         };
 
@@ -144,7 +181,19 @@ impl Parser {
                         stack_push(op, &mut stack);
                     }
                 }
-                '*' | '.' | '|' => {
+                '[' => {
+                    span_stack.push(c);
+                }
+                '-' => {}
+                ']' => {
+                    while span_stack.last().unwrap() != &'[' {
+                        let right = span_stack.pop().unwrap();
+                        let left = span_stack.pop().unwrap();
+                        stack.push(Box::new(AstNode::Span(left, right)));
+                    }
+                    span_stack.clear();
+                }
+                '*' | '+' | '?' | '.' | '|' => {
                     while let Some(op) = op_stack.last() {
                         if precedence(c) <= precedence(*op) {
                             stack_push(op_stack.pop().unwrap(), &mut stack);
@@ -154,7 +203,13 @@ impl Parser {
                     }
                     op_stack.push(c);
                 }
-                _ => stack.push(Box::new(AstNode::Char(c))),
+                _ => {
+                    if span_stack.is_empty() {
+                        stack.push(Box::new(AstNode::Char(c)));
+                    } else {
+                        span_stack.push(c);
+                    }
+                }
             }
         }
         while let Some(op) = op_stack.pop() {
@@ -174,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_add_dot() {
-        let mut parser = Parser::new("(a_b|a*b)*".to_string());
+        let mut parser = Parser::new("[a-z][a-z0-9]*\\[".to_string());
         parser.add_dot();
         println!("{}", parser.pattern);
     }
@@ -202,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_to_ast_directly() {
-        let mut parser = Parser::new("(a|b)*abb".to_string());
+        let mut parser = Parser::new("(a|b)+[a-c]\\[".to_string());
         parser.add_dot();
         let ast = parser.to_ast_directly();
         println!(

@@ -1,4 +1,4 @@
-use crate::common::Tag;
+use crate::common::{input2internal, internal2input, Tag};
 use crate::dfa::Dfa;
 pub struct Lexer<I>
 where
@@ -30,10 +30,11 @@ where
     fn get_next_char(&mut self) -> Option<char> {
         if let Some(c) = self.last_char {
             self.last_char = None;
+            let c = input2internal(c);
             return Some(c);
         }
         self.pos += 1;
-        self.input.next()
+        self.input.next().map(|c| input2internal(c))
     }
     pub fn get_next_token(&mut self) -> Option<(String, Tag)> {
         let mut state = 0;
@@ -59,7 +60,7 @@ where
                 break;
             }
         }
-        last_accept
+        last_accept.map(|(token, tag)| (token.chars().map(|c| internal2input(c)).collect(), tag))
     }
     pub fn is_done(&self) -> bool {
         self.is_done
@@ -76,6 +77,17 @@ pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
         let pattern_str = pattern_str.replace("\\t", "\t");
         let pattern_str = pattern_str.replace("\\n", "\n");
         let pattern_str = pattern_str.replace("\\r", "\r");
+        let pattern_str = pattern_str.replace("\\.", "\u{1000}");
+        let pattern_str = pattern_str.replace("\\*", "\u{1001}");
+        let pattern_str = pattern_str.replace("\\+", "\u{1002}");
+        let pattern_str = pattern_str.replace("\\?", "\u{1003}");
+        let pattern_str = pattern_str.replace("\\(", "\u{1004}");
+        let pattern_str = pattern_str.replace("\\)", "\u{1005}");
+        let pattern_str = pattern_str.replace("\\[", "\u{1006}");
+        let pattern_str = pattern_str.replace("\\]", "\u{1007}");
+        let pattern_str = pattern_str.replace("\\|", "\u{1008}");
+        let pattern_str = pattern_str.replace("\\-", "\u{1009}");
+        let pattern_str = pattern_str.replace("\\\\", "\u{100a}");
         pattern.push((pattern_str.to_string(), Tag(tag_str.to_string())));
     }
     pattern
