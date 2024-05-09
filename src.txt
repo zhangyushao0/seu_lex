@@ -1,7 +1,23 @@
-123 45 aufu0 while
-123 45 aufu0 while
-
-123 45 [aufu0] while
-
-
-123 45 aufu0 while
+#include <stdio.h>
+ 
+int main()
+{
+    int base, exponent;
+ 
+    long long result = 1;
+ 
+    printf("base: ");
+    scanf("%d", &base);
+ 
+    printf("exp: ");
+    scanf("%d", &exponent);
+ 
+    while (exponent != 0)
+    {
+        result *= base;
+        --exponent;
+    }
+    printf("result: %lld", result);
+ 
+    return 0;
+}

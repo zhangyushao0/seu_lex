@@ -1,5 +1,5 @@
 use crate::ast;
-use crate::common::Tag;
+use crate::common::{input2internal, Tag};
 use petgraph::dot::{Config, Dot};
 use petgraph::graph::DiGraph;
 use std::collections::HashMap;
@@ -172,6 +172,7 @@ impl Nfa {
                 let accept = self.new_state;
                 self.new_state += 1;
                 for c in start_char..=end_char {
+                    let c = input2internal(c as char);
                     self.get_state(start)
                         .transitions
                         .push((Transition::Symbol(c as char), accept));

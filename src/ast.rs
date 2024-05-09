@@ -229,7 +229,7 @@ mod tests {
 
     #[test]
     fn test_add_dot() {
-        let mut parser = Parser::new("[a-z][a-z0-9]*\\[".to_string());
+        let mut parser = Parser::new("\"[a-f]|[A-F]|[0-9]*\"".to_string());
         parser.add_dot();
         println!("{}", parser.pattern);
     }
@@ -257,7 +257,7 @@ mod tests {
 
     #[test]
     fn test_to_ast_directly() {
-        let mut parser = Parser::new("(a|b)+[a-c]\\[".to_string());
+        let mut parser = Parser::new("\"[!-~]*\"".to_string());
         parser.add_dot();
         let ast = parser.to_ast_directly();
         println!(

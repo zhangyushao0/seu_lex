@@ -71,6 +71,9 @@ pub fn read_from_lex_file(path: &str) -> Vec<(String, Tag)> {
     let content = std::fs::read_to_string(path).unwrap();
     let mut lines = content.lines();
     while let Some(line) = lines.next() {
+        if line.is_empty() {
+            continue;
+        }
         let mut iter = line.split("->");
         let tag_str = iter.next().unwrap();
         let pattern_str = iter.next().unwrap();
@@ -97,15 +100,11 @@ mod tests {
     use super::*;
     #[test]
     fn test_lexer() {
-        let pattern = vec![
-            (
-                "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*".to_string(),
-                Tag("DIGIT".to_string()),
-            ),
-            (" ".to_string(), Tag("SPACE".to_string())),
-        ];
-        let input = "123 45".chars();
+        let pattern = vec![("\"[a-c]*\"".to_string(), Tag("DIGIT".to_string()))];
+        let input = "\"1.6f\"".chars();
         let mut l = Lexer::new(input, pattern);
+        let graph = l.dfa.to_graphviz();
+        println!("{}", graph);
         let mut tokens = Vec::new();
         while let Some(token) = l.get_next_token() {
             tokens.push(token);

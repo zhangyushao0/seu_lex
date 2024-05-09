@@ -274,7 +274,7 @@ impl Dfa {
         self.states = new_states;
     }
 
-    fn to_graphviz(&self) -> String {
+    pub fn to_graphviz(&self) -> String {
         let mut graph = DiGraph::<String, String>::new();
         let mut state_map = HashMap::new();
 
