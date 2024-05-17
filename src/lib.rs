@@ -65,6 +65,16 @@ pub extern "C" fn lexer_init(lex_path: *const c_char, src_path: *const c_char) {
     }
 }
 
+// #[no_mangle]
+// pub extern "C" fn yylex() -> i32 {
+//     let index = INDEX.lock().unwrap();
+//     let tokens = TOKENS.lock().unwrap();
+//     // if *index < tokens.len() {
+//     //     let token = tokens.get(*index).unwrap();
+//     //     *index += 1;
+//     // }
+// }
+
 #[no_mangle]
 pub extern "C" fn lexer_get_tokens_count() -> usize {
     TOKENS.lock().unwrap().len()
@@ -86,4 +96,42 @@ pub extern "C" fn lexer_get_token_value(index: usize) -> *const c_char {
     let token_value = token.0.as_str();
     let c_str = std::ffi::CString::new(token_value).unwrap();
     c_str.into_raw()
+}
+
+extern "C" {
+    fn get_token_number(token_name: *const c_char) -> i32;
+    fn modify_yytext(token: *const c_char);
+}
+
+fn get_token_number_inter(token: &str) -> i32 {
+    if token.len() == 1 {
+        // let c_str = std::ffi::CString::new(token).unwrap();
+        return token.chars().next().unwrap() as i32;
+        // return unsafe { get_token_number(c_str.as_ptr()) };
+    }
+    let c_str = std::ffi::CString::new(token).unwrap();
+    unsafe { get_token_number(c_str.as_ptr()) + 255 }
+}
+
+#[no_mangle]
+pub extern "C" fn yylex() -> i32 {
+    let mut index = INDEX.lock().unwrap();
+    let tokens = TOKENS.lock().unwrap();
+    while *index < tokens.len() {
+        let token = tokens.get(*index).unwrap();
+
+        let token_number = get_token_number_inter(token.1.as_str());
+        // println!("token: {:?}, token_number: {:?}", token, token_number);
+        *index += 1;
+        if token_number == 254 {
+            continue;
+        }
+        println!("token{:?}, token_number{:?}", token, token_number);
+        let c_str = std::ffi::CString::new(token.0.as_str()).unwrap();
+        unsafe {
+            modify_yytext(c_str.into_raw());
+        }
+        return token_number;
+    }
+    0
 }

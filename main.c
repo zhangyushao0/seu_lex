@@ -1,17 +1,194 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 extern void lexer_init(const char *lex_path, const char *src_path);
-extern size_t lexer_get_tokens_count();
-extern const char *lexer_get_token_name(size_t index);
-extern const char *lexer_get_token_value(size_t index);
+extern size_t yylex();
+char *yytext;
+
+static const char *const yytname[] = {"\"end of file\"",
+                                      "error",
+                                      "\"invalid token\"",
+                                      "IDENTIFIER",
+                                      "CONSTANT",
+                                      "STRING_LITERAL",
+                                      "SIZEOF",
+                                      "PTR_OP",
+                                      "INC_OP",
+                                      "DEC_OP",
+                                      "LEFT_OP",
+                                      "RIGHT_OP",
+                                      "LE_OP",
+                                      "GE_OP",
+                                      "EQ_OP",
+                                      "NE_OP",
+                                      "AND_OP",
+                                      "OR_OP",
+                                      "MUL_ASSIGN",
+                                      "DIV_ASSIGN",
+                                      "MOD_ASSIGN",
+                                      "ADD_ASSIGN",
+                                      "SUB_ASSIGN",
+                                      "LEFT_ASSIGN",
+                                      "RIGHT_ASSIGN",
+                                      "AND_ASSIGN",
+                                      "XOR_ASSIGN",
+                                      "OR_ASSIGN",
+                                      "TYPE_NAME",
+                                      "TYPEDEF",
+                                      "EXTERN",
+                                      "STATIC",
+                                      "AUTO",
+                                      "REGISTER",
+                                      "INLINE",
+                                      "RESTRICT",
+                                      "CHAR",
+                                      "SHORT",
+                                      "INT",
+                                      "LONG",
+                                      "SIGNED",
+                                      "UNSIGNED",
+                                      "FLOAT",
+                                      "DOUBLE",
+                                      "CONST",
+                                      "VOLATILE",
+                                      "VOID",
+                                      "BOOL",
+                                      "COMPLEX",
+                                      "IMAGINARY",
+                                      "STRUCT",
+                                      "UNION",
+                                      "ENUM",
+                                      "ELLIPSIS",
+                                      "CASE",
+                                      "DEFAULT",
+                                      "IF",
+                                      "ELSE",
+                                      "SWITCH",
+                                      "WHILE",
+                                      "DO",
+                                      "FOR",
+                                      "GOTO",
+                                      "CONTINUE",
+                                      "BREAK",
+                                      "RETURN",
+                                      "'('",
+                                      "')'",
+                                      "'['",
+                                      "']'",
+                                      "'.'",
+                                      "'{'",
+                                      "'}'",
+                                      "','",
+                                      "'&'",
+                                      "'*'",
+                                      "'+'",
+                                      "'-'",
+                                      "'~'",
+                                      "'!'",
+                                      "'/'",
+                                      "'%'",
+                                      "'<'",
+                                      "'>'",
+                                      "'^'",
+                                      "'|'",
+                                      "'?'",
+                                      "':'",
+                                      "'='",
+                                      "';'",
+                                      "$accept",
+                                      "primary_expression",
+                                      "postfix_expression",
+                                      "argument_expression_list",
+                                      "unary_expression",
+                                      "unary_operator",
+                                      "cast_expression",
+                                      "multiplicative_expression",
+                                      "additive_expression",
+                                      "shift_expression",
+                                      "relational_expression",
+                                      "equality_expression",
+                                      "and_expression",
+                                      "exclusive_or_expression",
+                                      "inclusive_or_expression",
+                                      "logical_and_expression",
+                                      "logical_or_expression",
+                                      "conditional_expression",
+                                      "assignment_expression",
+                                      "assignment_operator",
+                                      "expression",
+                                      "constant_expression",
+                                      "declaration",
+                                      "declaration_specifiers",
+                                      "init_declarator_list",
+                                      "init_declarator",
+                                      "storage_class_specifier",
+                                      "type_specifier",
+                                      "struct_or_union_specifier",
+                                      "struct_or_union",
+                                      "struct_declaration_list",
+                                      "struct_declaration",
+                                      "specifier_qualifier_list",
+                                      "struct_declarator_list",
+                                      "struct_declarator",
+                                      "enum_specifier",
+                                      "enumerator_list",
+                                      "enumerator",
+                                      "type_qualifier",
+                                      "function_specifier",
+                                      "declarator",
+                                      "direct_declarator",
+                                      "pointer",
+                                      "type_qualifier_list",
+                                      "parameter_type_list",
+                                      "parameter_list",
+                                      "parameter_declaration",
+                                      "identifier_list",
+                                      "type_name",
+                                      "abstract_declarator",
+                                      "direct_abstract_declarator",
+                                      "initializer",
+                                      "initializer_list",
+                                      "designation",
+                                      "designator_list",
+                                      "designator",
+                                      "statement",
+                                      "labeled_statement",
+                                      "compound_statement",
+                                      "block_item_list",
+                                      "block_item",
+                                      "expression_statement",
+                                      "selection_statement",
+                                      "iteration_statement",
+                                      "jump_statement",
+                                      "translation_unit",
+                                      "external_declaration",
+                                      "function_definition",
+                                      "declaration_list",
+                                      NULL};
+
+int get_token_number(const char *token_name) {
+  for (int i = 0; yytname[i] != NULL; i++) {
+    if (strcmp(yytname[i], token_name) == 0) {
+      return i;
+    }
+  }
+  return -1;
+}
 
 int main() {
   lexer_init("/home/zys/repo/seu_lex/c99_modified.l",
              "/home/zys/repo/seu_lex/src.txt");
-  size_t tokens_count = lexer_get_tokens_count();
-  for (size_t i = 0; i < tokens_count; i++) {
-    printf("Token: %s, Value: %s\n", lexer_get_token_name(i),
-           lexer_get_token_value(i));
+  while (1) {
+    int yylex_num = yylex();
+    if (yylex_num == 0) {
+      break;
+    }
+    printf("token number %d\n", yylex_num);
+    // printf("token name %s\n", yytname[yylex()]);
+    printf("token text %s\n", yytext);
   }
   return 0;
 }
+
+void modify_yytext(char *text) { yytext = text; }

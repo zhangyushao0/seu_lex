@@ -60,6 +60,7 @@ where
                 break;
             }
         }
+        // println!("token: {:?}", token);
         last_accept.map(|(token, tag)| (token.chars().map(|c| internal2input(c)).collect(), tag))
     }
     pub fn is_done(&self) -> bool {
@@ -120,8 +121,8 @@ mod tests {
 
     #[test]
     fn test_lexer_from_file() {
-        let pattern = read_from_lex_file("G:\\repo\\seu_lex\\demo.lex");
-        let input = "abc".chars();
+        let pattern = read_from_lex_file("/home/zys/repo/seu_lex/c99_modified.l");
+        let input = "printf(\"result: %lld\", result);".chars();
         let mut l = Lexer::new(input, pattern);
         let mut tokens = Vec::new();
         while let Some(token) = l.get_next_token() {

@@ -221,8 +221,8 @@ mod tests {
     #[test]
     fn test_nfa_graphviz() {
         let pattern = vec![
-            ("(a|b)+[a-c]".to_string(), Tag("a".to_string())),
-            ("(a|b)*abb".to_string(), Tag("b".to_string())),
+            ("(a|b)+[a-c]".to_string(), Tag("A正则".to_string())),
+            ("(a|b)*abb".to_string(), Tag("B正则".to_string())),
         ];
         let mut nfa = Nfa::new(pattern);
         nfa.construct();

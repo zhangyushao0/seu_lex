@@ -34,6 +34,7 @@ UNION->union
 UNSIGNED->unsigned
 VOID->void
 VOLATILE->volatile
+WHILE->while
 
 ELLIPSIS->\.\.\.
 RIGHT_ASSIGN->>>=
@@ -57,34 +58,35 @@ LE_OP-><=
 GE_OP->>=
 EQ_OP->==
 NE_OP->!=
-SEMICOLON->;
-LEFT_CURLY->{
-RIGHT_CURLY->}
-COMMA->,
-COLON->:
-EQUALS->=
-LEFT_PAREN->\(
-RIGHT_PAREN->\)
-LEFT_BRACKET->\[
-RIGHT_BRACKET->\]
-PERIOD->\.
-AMPERSAND->&
-EXCLAMATION->!
-TILDE->~
-MINUS->\-
-PLUS->\+
-ASTERISK->\*
-SLASH->/
-PERCENT->%
-LESS_THAN-><
-GREATER_THAN->>
-CARET->^
-PIPE->\|
-QUESTION_MARK->\?
 
-IDENTIFIER->([a-z]|_)([a-z]|[0-9]|_)*
+;->;
+{->{
+}->}
+,->,
+:->:
+=->=
+(->\(
+)->\)
+[->\[
+]->\]
+.->\.
+&->&
+!->!
+~->~
+-->\-
++->\+
+*->\*
+/->/
+%->%
+<-><
+>->>
+^->^
+|->\|
+?->\?
 
-STRING_LITERAL->"([!-~]| |\t)*"
+IDENTIFIER->([a-z]|[A-Z]|_)([a-z]|[A-Z]|[0-9]|_)*
+
+STRING_LITERAL->"(!|[#-~]| |\t)*"
 
 CONSTANT->0(x|X)([a-f]|[A-F]|[0-9])+((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))?
 CONSTANT->0[0-7]*((u|U)|(u|U)?(l|L|ll|LL)|(l|L|ll|LL)(u|U))?
@@ -97,7 +99,10 @@ CONSTANT->0(x|X)([a-f]|[A-F]|[0-9])+((P|p)(\+|\-)?[0-9]+)(f|F|l|L)?
 CONSTANT->0(x|X)([a-f]|[A-F]|[0-9])*\.([a-f]|[A-F]|[0-9])+((P|p)(\+|\-)?[0-9]+)?(f|F|l|L)?
 CONSTANT->0(x|X)([a-f]|[A-F]|[0-9])+\.([a-f]|[A-F]|[0-9])*((P|p)(\+|\-)?[0-9]+)?(f|F|l|L)?
 
+COMMENT->//(!|[#-~]| |\t)*\n
 
-COMMENT->#([!-~]| |\t)*\n
+COMMENT->#(!|[#-~]| |\t)*\n
+
 
 WHITESPACE-> |\t|\n|\r
+

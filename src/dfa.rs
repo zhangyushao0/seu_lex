@@ -355,11 +355,8 @@ mod tests {
     #[test]
     fn test_dfa_graphviz() {
         let pattern = vec![
-            (
-                "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*".to_string(),
-                Tag("DIGIT".to_string()),
-            ),
-            ("a".to_string(), Tag("SPACE".to_string())),
+            ("(a|b)*c".to_string(), Tag("A正则".to_string())),
+            ("(a|b)*abb".to_string(), Tag("B正则".to_string())),
         ];
         let mut dfa = Dfa::new(pattern);
         dfa.construct();
@@ -370,11 +367,8 @@ mod tests {
     #[test]
     fn test_minimize() {
         let pattern = vec![
-            (
-                "(1|2|3|4|5|6|7|8|9)(0|1|2|3|4|5|6|7|8|9)*".to_string(),
-                Tag("DIGIT".to_string()),
-            ),
-            (" ".to_string(), Tag("SPACE".to_string())),
+            ("(a|b)*c".to_string(), Tag("A正则".to_string())),
+            ("(a|b)*abb".to_string(), Tag("B正则".to_string())),
         ];
         let mut dfa = Dfa::new(pattern);
         dfa.construct();
